@@ -1,0 +1,76 @@
+#This file is design to work with MinGWin toolchain under the batch shell of
+#Windows.
+
+ifeq ($(CONFIG), debug)
+  DEBUGFLAG = -g -DDEBUG -Wall -Wextra
+  DEBUGNAME = debug
+endif
+ifeq ($(CONFIG), release)
+  DEBUGFLAG = -O3 -DNDEBUG
+  DEBUGNAME = release
+endif
+
+#I prefer to always choose 32 as default value for BITS rather than doing
+#complicate hack to determine if the OS is 32 or 64 bits
+BITS := 32
+
+DEBUGFLAG ?= -g
+DEBUGNAME ?= debug
+ifeq ($(DEBUGFLAG),-O3)
+  DEBUGNAME = release
+endif
+
+#Note here: "OS" is a defined environment variable under windows, so the 
+#variable $(OS) is defined and contain this value.
+OBJECTPATH = $(OS)-$(BITS)-$(DEBUGNAME)
+
+$(PATHTOROOT)\Library\\$(OBJECTPATH)\\%.o : $(PATHTOROOT)\Library\\%.cpp
+	if not exist $(PATHTOROOT)\Library\\$(OBJECTPATH) mkdir $(PATHTOROOT)\Library\\$(OBJECTPATH)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(OBJECTPATH)\\%.o : %.cpp
+	if not exist $(OBJECTPATH) mkdir $(OBJECTPATH)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+SUPPORTOBJECTS = $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsMultiThread.o \
+		 $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsInteract.o \
+		 $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsProperty.o \
+		 $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsLog.o \
+		 $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsCore.o \
+		 $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsPropertyValidation.o \
+		 $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsImageEffect.o \
+		 $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsParams.o 
+
+
+all: $(OBJECTPATH)\\$(PLUGINNAME).ofx.bundle
+
+LINKFLAGS = -static -shared -Wl,--dll -fvisibility=hidden -lopengl32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lwsock32 -lcomctl32
+ARCH = Win32
+BITSFLAG=
+ifeq ($(BITS), 64)
+  BITSFLAG=
+  ARCH = Win64
+endif
+LINKFLAGS := $(LINKFLAGS) $(BITSFLAG)
+
+	
+  CXXFLAGS := $(DEBUGFLAG)  -I$(PATHTOROOT)\..\include -I$(PATHTOROOT)\include -I$(PATHTOROOT)\Plugins\include $(BITSFLAG) -fvisibility=hidden $(CXXFLAGS_ADD)
+
+$(OBJECTPATH)\\$(PLUGINNAME).ofx: $(addprefix $(OBJECTPATH)\,$(PLUGINOBJECTS)) $(SUPPORTOBJECTS)
+	if not exist $(OBJECTPATH) mkdir $(OBJECTPATH)
+	$(CXX) $(LINKFLAGS) $(LDFLAGS_ADD) $^  -o $@
+
+$(OBJECTPATH)\\$(PLUGINNAME).ofx.bundle: $(OBJECTPATH)\\$(PLUGINNAME).ofx
+	if not exist $@\Contents\\$(ARCH) mkdir $@\Contents\\$(ARCH)
+	copy  $^  $@\Contents\\$(ARCH)
+	copy  Info.plist  $@\Contents
+	IF NOT "$(RESOURCES)" == "" \
+	  if not exist $@\Contents\Resources mkdir $@\Contents\Resources &&\
+	  copy $(RESOURCES)  $@\Contents\Resources
+
+clean :
+	DEL /Q $(SUPPORTOBJECTS) $(OBJECTPATH)\ $(PATHTOROOT)\Library\\$(OBJECTPATH) 
+
+release :
+	make DEBUGFLAG=-O3
+
