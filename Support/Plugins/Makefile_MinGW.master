@@ -10,9 +10,13 @@ ifeq ($(CONFIG), release)
   DEBUGNAME = release
 endif
 
-#I prefer to always choose 32 as default value for BITS rather than doing
-#complicate hack to determine if the OS is 32 or 64 bits
+#Use the compiler default target architecture to determine if we build 32 or 64
+#bits by default because several conbination of MinGWin distribution and -m32 
+#or -m64 flags are uncompatible
 BITS := 32
+ifneq (,$(findstring x86_64,$(shell $(CXX) -dumpmachine )))
+  BITS := 64
+endif
 
 DEBUGFLAG ?= -g
 DEBUGNAME ?= debug
@@ -44,11 +48,12 @@ SUPPORTOBJECTS = $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsMultiThread.o \
 
 all: $(OBJECTPATH)\\$(PLUGINNAME).ofx.bundle
 
-LINKFLAGS = -static -shared -Wl,--dll -fvisibility=hidden -lopengl32 -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lwsock32 -lcomctl32
+LINKFLAGS = -static -shared -Wl,--dll -fvisibility=hidden -lopengl32 
+#-lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lwsock32 -lcomctl32
 ARCH = Win32
-BITSFLAG=
+BITSFLAG=-m32
 ifeq ($(BITS), 64)
-  BITSFLAG=
+  BITSFLAG=-m64
   ARCH = Win64
 endif
 LINKFLAGS := $(LINKFLAGS) $(BITSFLAG)
