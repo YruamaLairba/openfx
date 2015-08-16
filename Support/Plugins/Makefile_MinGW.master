@@ -77,5 +77,5 @@ clean :
 	DEL /Q $(SUPPORTOBJECTS) $(OBJECTPATH)\ $(PATHTOROOT)\Library\\$(OBJECTPATH) 
 
 release :
-	make DEBUGFLAG=-O3
+	$(MAKE) -f $(firstword $(MAKEFILE_LIST)) CONFIG=release
 
