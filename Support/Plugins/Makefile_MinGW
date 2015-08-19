@@ -1,0 +1,14 @@
+SUBDIRS = Basic Field Generator Invert MultiBundle Retimer Tester Transition
+
+all: subdirs
+
+.PHONY: subdirs clean $(SUBDIRS)
+
+subdirs: $(SUBDIRS)
+
+$(SUBDIRS):
+	$(MAKE) -C $@ -f Makefile_MinGW
+
+clean :
+	FOR %%i IN ($(SUBDIRS)) DO \
+	  $(MAKE) -C %%i -f Makefile_MinGW clean

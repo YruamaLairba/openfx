@@ -1,0 +1,7 @@
+PLUGINOBJECTS = noise.o randomGenerator.o
+PLUGINNAME = noise
+#hack to avoid backslash at end of line
+PATHTOROOT = $(subst /,\,../../)
+
+include ..\Makefile_MinGW.master
+

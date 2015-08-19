@@ -48,8 +48,9 @@ SUPPORTOBJECTS = $(PATHTOROOT)\Library\\$(OBJECTPATH)\ofxsMultiThread.o \
 
 all: $(OBJECTPATH)\\$(PLUGINNAME).ofx.bundle
 
-LINKFLAGS = -static -shared -Wl,--dll -fvisibility=hidden -lopengl32 
+LINKFLAGS = -static -shared -Wl,--dll -fvisibility=hidden  -lopengl32
 #-lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -lwsock32 -lcomctl32
+#-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
 ARCH = Win32
 BITSFLAG=-m32
 ifeq ($(BITS), 64)
@@ -59,11 +60,11 @@ endif
 LINKFLAGS := $(LINKFLAGS) $(BITSFLAG)
 
 	
-  CXXFLAGS := $(DEBUGFLAG)  -I$(PATHTOROOT)\..\include -I$(PATHTOROOT)\include -I$(PATHTOROOT)\Plugins\include $(BITSFLAG) -fvisibility=hidden $(CXXFLAGS_ADD)
+  CXXFLAGS := -DWIN32 $(DEBUGFLAG)  -I$(PATHTOROOT)\..\include -I$(PATHTOROOT)\include -I$(PATHTOROOT)\Plugins\include $(BITSFLAG) -fvisibility=hidden $(CXXFLAGS_ADD)
 
 $(OBJECTPATH)\\$(PLUGINNAME).ofx: $(addprefix $(OBJECTPATH)\,$(PLUGINOBJECTS)) $(SUPPORTOBJECTS)
 	if not exist $(OBJECTPATH) mkdir $(OBJECTPATH)
-	$(CXX) $(LINKFLAGS) $(LDFLAGS_ADD) $^  -o $@
+	$(CXX) $^ $(LINKFLAGS) $(LDFLAGS_ADD) -o $@
 
 $(OBJECTPATH)\\$(PLUGINNAME).ofx.bundle: $(OBJECTPATH)\\$(PLUGINNAME).ofx
 	if not exist $@\Contents\\$(ARCH) mkdir $@\Contents\\$(ARCH)
@@ -74,7 +75,10 @@ $(OBJECTPATH)\\$(PLUGINNAME).ofx.bundle: $(OBJECTPATH)\\$(PLUGINNAME).ofx
 	  copy $(RESOURCES)  $@\Contents\Resources
 
 clean :
-	DEL /Q $(SUPPORTOBJECTS) $(OBJECTPATH)\ $(PATHTOROOT)\Library\\$(OBJECTPATH) 
+	FOR %%i IN ($(SUPPORTOBJECTS)) DO \
+	IF EXIST %%i DEL /Q %%i 
+	IF EXIST $(OBJECTPATH)\ DEL /Q $(OBJECTPATH)\ $(PATHTOROOT)\Library\\$(OBJECTPATH) 
+	IF EXIST $(PATHTOROOT)\Library\\$(OBJECTPATH) DEL /Q $(PATHTOROOT)\Library\\$(OBJECTPATH)
 
 release :
 	$(MAKE) -f $(firstword $(MAKEFILE_LIST)) CONFIG=release
